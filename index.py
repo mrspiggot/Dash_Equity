@@ -3,6 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+from apps import charts
 
 input_analysis_dropdown = dbc.DropdownMenu(
     children=[
@@ -65,6 +66,13 @@ def serve_layout():
 style=CONTENT_STYLE)
 
 app.layout = serve_layout
+
+@app.callback(Output('page-content', 'children'),
+              [Input('page-url', 'pathname')], prevent_initial_call=True)
+#@cache.memoize(timeout=20)
+def display_page(pathname):
+    if pathname == '/charts':
+        return charts.layout
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8027)
