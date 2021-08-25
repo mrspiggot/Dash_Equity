@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from apps import charts
+from apps import charts, heatmaps, benchmarks
 
 input_analysis_dropdown = dbc.DropdownMenu(
     children=[
@@ -73,6 +73,10 @@ app.layout = serve_layout
 def display_page(pathname):
     if pathname == '/charts':
         return charts.layout
+    if pathname == '/heatmaps':
+        return heatmaps.layout
+    if pathname == '/benchmarks':
+        return benchmarks.layout
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8027)
