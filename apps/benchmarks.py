@@ -112,8 +112,6 @@ def equity_index_chart(svalue, ivalue):
 
     df = pd.read_excel('assets/' + slider_dict[svalue] + '.xlsx')
     name_dict = benchmark_dict['Stock Index']
-    print(ivalue)
-    print(name_dict)
     df.dropna(inplace=True)
     df['Date'] = pd.to_datetime(df['Unnamed: 0'], format='%d/%m/%Y')
     df.set_index('Unnamed: 0', inplace=True)
