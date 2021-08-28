@@ -22,12 +22,12 @@ layout = html.Div([
         dbc.Col(html.H5('Move Slider to see gains (losses) over different timeframes'),
             width=4, lg={'size': 4,  "offset": 0}),
         dbc.Col(
-            dcc.Slider(min=1, max=2, marks={1: "Yes", 2: "No"}, id="sector-include-slider", value=1),
+            dcc.Slider(min=1, max=2, marks={1: "Yes", 2: "No"}, id="sector-include-slider", value=2),
             width=1, lg={'size': 1,  "offset": 0}),
         dbc.Col(html.H5('Include Stock Type?'),
             width=2, lg={'size': 1, "offset": 0, 'order': 'last'}),
     ]),
-    dbc.Spinner(dcc.Graph(id='sector-treemap', figure = {}), color='primary',),
+    dbc.Spinner(dcc.Graph(id='sector-treemap', figure = {},), color='primary',),
 ])
 @app.callback(Output('sector-treemap', 'figure'),
               [Input('sector-treemap-slider', 'value'),
@@ -47,8 +47,9 @@ def treemap(value, include_type):
 
 
     fig = px.treemap(port, path=tree_path, values='Yesterday Close', color='Gain',
-                     color_continuous_scale='thermal', height=780)
-
+                     color_continuous_scale='thermal', height=780,)
+    fig.data[0].textinfo = 'label+value+percent parent'
     fig.layout.plot_bgcolor='#222'
     fig.layout.paper_bgcolor='#222'
+    fig.update_layout(font_color='#29E')
     return fig
