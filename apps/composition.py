@@ -48,7 +48,7 @@ def portfolio_sunburst():
 
     port = pd.read_excel('assets/Historical Performance.xlsx')
 
-    port['Percent'] = port['Yesterday Close'] * 100
+    port['Percent'] = port['Yesterday Close'] / port['Yesterday Close'].sum() * 100
     port['Percent'] = port['Percent'].round(2)
 
 
