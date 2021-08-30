@@ -1,5 +1,6 @@
 import json
 import urllib
+from ast import literal_eval
 
 
 import dash_html_components as html
@@ -18,80 +19,58 @@ data = json.loads(response.read())
 
 
 layout = html.Div([
-    dcc.Dropdown(id='opacity'),
+    dbc.Row([
+        dbc.Col([html.P("Chart Type:")], width=1),
+        dbc.Col([dcc.Dropdown(id='chart-dd',
+                   options=[{'label': 'Portfolio', 'value': 'portfolio'},
+                            {'label': 'Ordered Portfolio', 'value': 'ordered'}],
+                   value='portfolio',
+                   className='dash-bootstrap')], width=2),
+    ]),
     dcc.Graph(id="graph"),
     html.P("Opacity"),
 
 ])
+def get_spreadsheet_data(filename):
+    df = pd.read_excel(filename)
+    node = dict(zip(df['Key'], df['node']))
+    link = dict(zip(df['Key'], df['link']))
+    ret_node = {}
+    ret_link = {}
+    for k, v in node.items():
+        if k in ['line', 'label', 'color']:
+            ret_node[k] = literal_eval(v)
+
+    for k, v in link.items():
+        # if k in ['label', 'color', 'source', 'target', 'value']:
+        if k in ['color', 'source', 'target', 'value']:
+            ret_link[k] = literal_eval(v)
+    return ret_node, ret_link
+
+
 
 @app.callback(
     Output("graph", "figure"),
-    [Input("opacity", "value")])
-def display_sankey(opacity):
-    opacity = str(opacity)
+    [Input("chart-dd", "value")])
+def display_sankey(chart_type):
+    if chart_type == 'ordered':
+        node, link = get_spreadsheet_data('assets/Sankey Portfolio Ordered.xlsx')
+        fig = go.Figure(go.Sankey(link=link, node=node))
+        fig.update_layout(font=dict(size=13, color='white'), height=850, plot_bgcolor='#222', paper_bgcolor='#222', )
+    else:
+        node, link = get_spreadsheet_data('assets/Sankey Portfolio.xlsx')
+       fig = go.Figure(go.Sankey(link=link, node=node))
+        fig.update_layout(font=dict(size=13, color='white'), height=850, plot_bgcolor='#222', paper_bgcolor='#222', )
 
-    cmap = {
-        'Communication Services': 'orange',
-        'Consumer Discretionary': 'yellow',
-        'Consumer Staples': 'red',
-        'Energy': 'black',
-        'Financials': 'cyan',
-        'Health Care': 'green',
-        'Industrials': 'olive',
-        'Information Technology': 'blue',
-        'Materials': 'purple',
-        'Real Estate': 'magenta',
-        'Utilities': 'maroon'
+        fig.update_layout(
+            hovermode='x',
+            title="Household Budget",
+            font=dict(size=10, color='white'),
+            height=880,
+            plot_bgcolor='#222',
+            paper_bgcolor='#222',
+            # color_discrete_map=cmap,
+        )
 
-    }
-
-    fig = go.Figure(data=[go.Sankey(
-        node = dict(
-          pad = 5,
-          thickness = 20,
-          line = dict(color = "black", width = 0.5),
-          label = ["Communication Services", "Consumer Discretionary", "Consumer Staples", "Energy", "Financials", "Health Care", "Industrials", "Information Technology", "Materials", "Real Estate", "Utilities",
-                        "Communication Services", "Consumer Discretionary", "Consumer Staples", "Energy", "Financials", "Health Care", "Industrials", "Information Technology", "Materials", "Real Estate", "Utilities",],
-          customdata = ["Communication Services", "Consumer Discretionary", "Consumer Staples", "Energy", "Financials", "Health Care", "Industrials", "Information Technology", "Materials", "Real Estate", "Utilities",
-                        "Communication Services", "Consumer Discretionary", "Consumer Staples", "Energy", "Financials", "Health Care", "Industrials", "Information Technology", "Materials", "Real Estate", "Utilities",],
-          hovertemplate='Node %{customdata} has total value %{value}<extra></extra>',
-          # color_discrete_map=cmap,
-
-        ),
-        link = dict(
-          source = [0, 0,  1,   2,   3,   4,  3,   3,   3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], # indices correspond to labels, eg A1, A2, A2, B1, ...
-          target = [11, 18,  18,   18,   18,   18,  16,   19,   20, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
-          value = [8, 0.3, 9.7, 7.5, 3.9, 2.5, 0.8, 0.1, 0.1, 24.5, 8.9, 1.3, 5.8, 16.9, 5.3, 24.7, 2.9, 0.8, 0.9],
-          customdata = ["q","r","s","t","u","v"],
-          hovertemplate='Link from node %{source.customdata}<br />'+
-            'to node%{target.customdata}<br />has value %{value}'+
-            '<br />',
-      ))])
-    fig.update_layout(
-        hovermode='x',
-        title="Portfolio Rebalancing",
-        font=dict(size=10, color='white'),
-        height=880,
-        plot_bgcolor='#222',
-        paper_bgcolor='#222',
-        # color_discrete_map=cmap,
-    )
-
-    # # override gray link colors with 'source' colors
-    # node = data['data'][0]['node']
-    # link = data['data'][0]['link']
-    #
-    # # Change opacity
-    # node['color'] = [
-    #     'rgba(255,0,255,{})'.format(opacity)
-    #     if c == "magenta" else c.replace('0.8', opacity)
-    #     for c in node['color']]
-    #
-    # link['color'] = [
-    #     node['color'][src] for src in link['source']]
-    #
-    # fig = go.Figure(go.Sankey(link=link, node=node))
-    fig.update_layout(font_size=10)
-    fig.update_layout(title_text="Basic Sankey Diagram", font_size=10)
     return fig
 
