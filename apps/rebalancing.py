@@ -59,7 +59,7 @@ def display_sankey(chart_type):
         fig.update_layout(font=dict(size=13, color='white'), height=850, plot_bgcolor='#222', paper_bgcolor='#222', )
     else:
         node, link = get_spreadsheet_data('assets/Sankey Portfolio.xlsx')
-       fig = go.Figure(go.Sankey(link=link, node=node))
+        fig = go.Figure(go.Sankey(link=link, node=node))
         fig.update_layout(font=dict(size=13, color='white'), height=850, plot_bgcolor='#222', paper_bgcolor='#222', )
 
         fig.update_layout(
