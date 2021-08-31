@@ -3,7 +3,11 @@ from datetime import date, timedelta
 import pandas as pd
 import pickle
 import numpy as np
+import pandas_datareader as pdr
+from pathlib import Path
+import pickle
 
+curr_dir = Path.cwd()
 
 class PortfolioDataGenerator():
     def __init__(self):
@@ -143,13 +147,59 @@ class BenchmarkGenerator():
             cum_ret.to_excel('../assets/' + str(term) + '.xlsx')
 
 
+class Risk():
+    def __init__(self, filename='assets/Sample Portfolio.xlsx'):
+
+        self.df = pd.read_excel(curr_dir.joinpath(filename))
+        self.today = date.today()
+        self.start = self.today - timedelta(days=3 * 365)
+        self.tickers = self.get_tickers()
+        self.quotes, self.weights, self.investment = self.get_quotes_and_weights()
+        self.returns = self.get_returns()
+        self.cov = self.get_covariance()
+        self.stats = self.calculate_stats()
+
+    def get_tickers(self):
+        return self.df['Ticker'].to_list()
+
+
+    def get_quotes_and_weights(self):
+        quotes = pdr.get_data_yahoo(self.tickers, self.start, self.today)['Adj Close']
+        qty = np.array(self.df['Quantity'])
+        latest = quotes.iloc[-1]            # Get the latest quote values as a list
+        position = latest.values * qty      # Use broadcasting to get an array of USD position values for each stock
+        total = position.sum()              # Get the total USD portfolio value
+        weights = position / total          # Obtain the proportion of each stock in the overall portfolio by USD Value
+
+        return quotes, weights, total
+
+    def get_returns(self):
+        return self.quotes.pct_change()
+
+    def get_covariance(self):
+        return self.returns.cov()
+
+    def calculate_stats(self):
+        stats_dict = {}
+        stats_dict['Average Returns'] = self.returns.mean()                           # Mean Returns for each stock
+        stats_dict['Mean Returns'] = stats_dict['Average Returns'].dot(self.weights)  # mean Returns for whole portfolio
+        stats_dict['Portfolio Sigma'] = np.sqrt(self.weights.T.dot(self.cov).dot(self.weights))
+        stats_dict['Mean Investment'] = (1 + stats_dict['Mean Returns'])*self.investment
+        stats_dict['Investment Sigma'] = self.investment * stats_dict['Portfolio Sigma']
+
+        return stats_dict
 
 
 
 
 
 
-bench = BenchmarkGenerator()
+
+# var = Risk()
+# print(var.stats)
+
+
+# bench = BenchmarkGenerator()
 # returns = bench.generate_daily_returns('1 Month')
 # print(returns)
 # mean_daily_returns = returns.mean()
@@ -165,5 +215,5 @@ bench = BenchmarkGenerator()
 # print(quotes, quotes.info())
 # cum_ret = bench.merge_returns_with_benchmarks('1 Year')
 # print(cum_ret, cum_ret.info())
-bench.generate_content_for_dropdowns()
-bench.create_excel_files()
+# bench.generate_content_for_dropdowns()
+# bench.create_excel_files()

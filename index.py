@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey
+from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk
 
 input_analysis_dropdown = dbc.DropdownMenu(
     children=[
@@ -37,7 +37,7 @@ navbar = dbc.Navbar(
                  dbc.NavItem(dbc.NavLink("Composition", href="/composition")),
                  dbc.NavItem(dbc.NavLink("Sankey", href="/sankey")),
                  dbc.NavItem(dbc.NavLink("Rebalancing", href="/rebalancing")),
-                 dbc.NavItem(dbc.NavLink("VaR", href="/Value_At_Risk")),
+                 dbc.NavItem(dbc.NavLink("Risk", href="/Value_At_Risk")),
                  input_analysis_dropdown,
 
                  ], className="ml-auto", navbar=True
@@ -83,6 +83,8 @@ def display_page(pathname):
         return rebalancing.layout
     if pathname == '/sankey':
         return sankey.layout
+    if pathname == '/Value_At_Risk':
+        return risk.layout
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8027)
