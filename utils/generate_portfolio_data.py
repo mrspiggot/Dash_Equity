@@ -192,9 +192,6 @@ class Risk():
 
 
 
-
-
-
 # var = Risk()
 # print(var.stats)
 

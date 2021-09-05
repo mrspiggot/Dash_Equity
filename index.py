@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk
+from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk, twitter_charts
 
 input_analysis_dropdown = dbc.DropdownMenu(
     children=[
@@ -85,6 +85,8 @@ def display_page(pathname):
         return sankey.layout
     if pathname == '/Value_At_Risk':
         return risk.layout
+    if pathname == '/twitter':
+        return twitter_charts.layout
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8027)

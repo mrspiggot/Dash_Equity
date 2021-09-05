@@ -47,7 +47,7 @@ def treemap(value, include_type):
 
 
     fig = px.treemap(port, path=tree_path, values='Yesterday Close', color='Gain',
-                     color_continuous_scale='thermal', height=780,)
+                     color_continuous_scale='thermal', height=1020,)
     fig.data[0].textinfo = 'label+value+percent parent'
     fig.layout.plot_bgcolor='#222'
     fig.layout.paper_bgcolor='#222'

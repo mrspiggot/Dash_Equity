@@ -13,7 +13,7 @@ import pandas as pd
 conf_dict = {"display": {0: '95', 1: '99', 2: '99.5'},
              "calculate" : {0: 0.05, 1: 0.01, 2: 0.005}}
 term_dict = {"display": {0: "1_day", 1: "1_week", 2: "1_Month"},
-             "calculate": {0: 1, 1: 7, 2: 30}}
+             "calculate": {0: 1, 1: 5, 2: 21}}
 risk = Risk('assets/Sample Portfolio.xlsx')
 
 def df_to_plotly(df):
@@ -25,7 +25,7 @@ def correlation_surface():
     cov = pd.DataFrame(risk.cov)
 
     fig = go.Figure(data=[go.Surface(x=cov.columns.tolist(), y=cov.index.tolist(), z=cov.values*10000)])
-    fig.update_layout(autosize=False, width=1170, height=780, title="Variance / Covariance Surface",
+    fig.update_layout(autosize=False, width=1470, height=1020, title="Variance / Covariance surface",
                       font=dict(size=11),
                       xaxis=dict(type='category'),
                       yaxis=dict(type='category'),
@@ -64,49 +64,52 @@ def correlation_heatmap():
     cov_hm = df_to_plotly(cov)
 
     fig = go.Figure(data=go.Heatmap(cov_hm))
-    fig.update_layout(autosize=False, width=1070, height=800, title="Variance / Covariance matrix",
+    fig.update_layout(autosize=False, width=1270, height=1050, title="Variance / Covariance matrix",
                       plot_bgcolor='#222',
                       paper_bgcolor='#222',
                       font_color='#29E',)
     return fig
 
-def daily_returns(conf_int):
+def daily_returns(conf_int, days):
     ret = pd.DataFrame(risk.returns)
     r = ret[risk.tickers].fillna(0)
     ret['daily'] = r.dot(risk.weights)*risk.investment
     ret['P&L Date'] =ret.index
-    fig = px.bar(ret, x='P&L Date', y="daily",
-                 title="Historical Simulation: 'What-if' daily returns of current portfolio over the last three years",
-                 labels={'daily': 'Daily performance ($USD)'})
-    fig.update_layout(autosize=False, width=870, height=600,
+    ret['rolling'] = ret['daily'].rolling(days).sum()
+    es = -1.0 * ret.sort_values(['rolling'], ascending=True).head(int(len(ret)*conf_int))['rolling'].mean()
+    fig = px.bar(ret, x='P&L Date', y="rolling",
+                 title="Historical Simulation: 'What-if' " + str(days) + " busness-day returns of current portfolio over the last three years",
+                 labels={'daily': str(days) + ' day performance ($USD)'})
+    fig.update_layout(autosize=False, width=1100, height=800,
                       plot_bgcolor='#222',
                       paper_bgcolor='#222',
                       font_color='#29E')
 
-    es = -1.0 * ret.sort_values(['daily'], ascending=True).head(int(len(ret)*conf_int))['daily'].mean()
     return fig, es
 
-def pnl_histogram(conf_int):
+def pnl_histogram(conf_int, days):
     ret = pd.DataFrame(risk.returns)
     r = ret[risk.tickers].fillna(0)
     ret['daily'] = r.dot(risk.weights)*risk.investment
-    fig = px.histogram(ret, x=ret['daily'], marginal='rug', labels={'daily':'P&L'}, title="Profit & Loss Histogram")
-    fig.update_layout(autosize=False, width=870, height=600,
+
+    ret['P & L'] = ret['daily'].rolling(days).sum()
+    es = -1.0 * ret.sort_values(['P & L'], ascending=True).head(int(len(ret)*conf_int))['P & L'].mean()
+    fig = px.histogram(ret, x=ret['P & L'], marginal='rug', labels={'P & L':'P&L'}, title="Profit & Loss Histogram")
+    fig.update_layout(autosize=False, width=1100, height=800,
                       plot_bgcolor='#222',
                       paper_bgcolor='#222',
                       font_color='#29E')
-    es = -1.0 * ret.sort_values(['daily'], ascending=True).head(int(len(ret)*conf_int))['daily'].mean()
     return fig, es
 
 
 layout = html.Div([
     dbc.Row([
         dbc.Col([
-            html.P("Confidence Level (Var & ES) [%]:"),
+            html.P("Confidence Level [%]:"),
             dcc.Slider(id="conf-sl", min=0, max=2, marks=conf_dict["display"], value=0, className='dash-bootstrap')
         ], width=2),
         dbc.Col([
-            html.P("Period (Var only):"),
+            html.P("Period:"),
             dcc.Slider(id="period-sl", min=0, max=2, marks=term_dict["display"], value=0, className='dash-bootstrap')
         ], width={"size": 2, "offset": 0}),
         dbc.Col(dcc.RadioItems(
@@ -151,15 +154,15 @@ def display_risk_metrics(conf, period, hist_bar):
     term_d = term_dict["display"][period]
     conf_int_d = conf_dict["display"][conf]
     if hist_bar == "Timeline":
-        fig, es = daily_returns(conf_int)
+        fig, es = daily_returns(conf_int, term)
     else:
-        fig, es = pnl_histogram(conf_int)
+        fig, es = pnl_histogram(conf_int, term)
 
     var_cutoff = norm.ppf(conf_int, risk.stats['Mean Investment'], risk.stats['Investment Sigma'])
     value_at_risk = (risk.investment - var_cutoff) * np.sqrt(term)
 
     var_string = str(term_d.replace("_", " ")) + " VaR at " + str(conf_int_d) + "% confidence level is: $" + "{:,}".format(value_at_risk.round(2))
-    es_string = "1 day Expected Shortfall at "+ str(conf_int_d) + "% confidence level is: $" + "{:,}".format(es.round(2))
+    es_string = str(term_d.replace("_", " ")) + " Expected Shortfall at "+ str(conf_int_d) + "% confidence level is: $" + "{:,}".format(es.round(2))
     return dbc.CardBody([html.H5(var_string), html.H5(es_string)]), fig
 
 @app.callback(Output('cor-surf', 'figure'),

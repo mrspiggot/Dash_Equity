@@ -15,7 +15,7 @@ with open('assets/dropdown.pickle', 'rb') as handle:
 with open('assets/ticker.pickle', 'rb') as handle:
     ticker_dict = pickle.load(handle)
 
-CHART_HEIGHT = 380
+CHART_HEIGHT = 500
 
 layout = html.Div([
         dbc.Row([

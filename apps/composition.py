@@ -41,7 +41,7 @@ def portfolio_sunburst():
     }
 
     fig = px.sunburst(sp_df, path=['Sector', 'Group', 'Security'], values='Percent', color='Sector',
-                      color_discrete_map=cmap, height=800)
+                      color_discrete_map=cmap, height=1100)
     fig.layout.plot_bgcolor='#222'
     fig.layout.paper_bgcolor='#222'
 
@@ -54,7 +54,7 @@ def portfolio_sunburst():
 
 
     fig2 = px.sunburst(port, path=['Industry', 'Sector', 'Name'], values='Percent', color='Industry',
-                       color_discrete_map=cmap, height=800)
+                       color_discrete_map=cmap, height=1100)
 
     fig2.layout.plot_bgcolor='#222'
     fig2.layout.paper_bgcolor='#222'

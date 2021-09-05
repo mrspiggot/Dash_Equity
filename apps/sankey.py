@@ -60,11 +60,11 @@ def display_sankey(chart_type):
     if chart_type == 'energy':
         node, link = get_spreadsheet_data('assets/Sankey_Energy.xlsx')
         fig = go.Figure(go.Sankey(link=link, node=node))
-        fig.update_layout(font=dict(size=13, color='white'), height=850, plot_bgcolor='#222', paper_bgcolor='#222', )
+        fig.update_layout(font=dict(size=18, color='white'), height=1050, plot_bgcolor='#222', paper_bgcolor='#222', )
     elif chart_type == 'portfolio':
         node, link = get_spreadsheet_data('assets/Sankey Portfolio.xlsx')
         fig = go.Figure(go.Sankey(link=link, node=node))
-        fig.update_layout(font=dict(size=13, color='white'), height=850, plot_bgcolor='#222', paper_bgcolor='#222', )
+        fig.update_layout(font=dict(size=18, color='white'), height=1050, plot_bgcolor='#222', paper_bgcolor='#222', )
     else:
         name = get_budget_node_data()
         source, target, value = get_budget_link_data()
@@ -93,8 +93,8 @@ def display_sankey(chart_type):
         fig.update_layout(
             hovermode='x',
             title="Household Budget",
-            font=dict(size=10, color='white'),
-            height=880,
+            font=dict(size=18, color='white'),
+            height=1050,
             plot_bgcolor='#222',
             paper_bgcolor='#222',
             # color_discrete_map=cmap,

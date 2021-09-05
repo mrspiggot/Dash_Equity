@@ -133,7 +133,7 @@ def single_stock_ohlc_chart(ticker, date_range):
     fig.layout.title=stocks.ticker_dict[ticker] + str(": Stock price")
     fig.update_xaxes(title_text = "Date")
     fig.update_yaxes(title_text = "Stock Price ($)")
-    fig.update_layout(font=dict(color='#58C'), height=650)
+    fig.update_layout(font=dict(color='#58C'), height=850)
 
     return fig
 
@@ -166,7 +166,7 @@ def multi_stock_returns_chart(ticker, date_range, price_or_return):
 
     fig.layout.plot_bgcolor='#222'
     fig.layout.paper_bgcolor='#222'
-    fig.update_layout(font=dict(color='#58C'), height=650,
+    fig.update_layout(font=dict(color='#58C'), height=850,
                       title=title,
                       xaxis_title='Date',
                       yaxis_title=y_axis_text
