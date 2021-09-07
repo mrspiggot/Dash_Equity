@@ -3,16 +3,17 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk, twitter_charts
+from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk, twitter_charts, oxcgrt_bubble, oxcgrt_map
 
 input_analysis_dropdown = dbc.DropdownMenu(
     children=[
-        dbc.DropdownMenuItem("OxCGRT", href='/oxford'),
+        dbc.DropdownMenuItem("OxCGRT Bubble", href='/oxford_bubble'),
+        dbc.DropdownMenuItem("OxCGRT Map", href='/oxford_map'),
         dbc.DropdownMenuItem("Twitter Sentiment", href='/twitter'),
     ],
     nav=True,
     in_navbar=True,
-    label="Equity Analysis",
+    label="Macro Analysis",
 )
 
 navbar = dbc.Navbar(
@@ -87,6 +88,10 @@ def display_page(pathname):
         return risk.layout
     if pathname == '/twitter':
         return twitter_charts.layout
+    if pathname == '/oxford_bubble':
+        return oxcgrt_bubble.layout
+    if pathname == '/oxford_map':
+        return oxcgrt_map.layout
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8027)

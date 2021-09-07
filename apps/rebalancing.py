@@ -22,8 +22,8 @@ layout = html.Div([
     dbc.Row([
         dbc.Col([html.P("Chart Type:")], width=1),
         dbc.Col([dcc.Dropdown(id='chart-dd',
-                   options=[{'label': 'Portfolio', 'value': 'portfolio'},
-                            {'label': 'Ordered Portfolio', 'value': 'ordered'}],
+                   options=[{'label': 'Q2 Portfolio', 'value': 'portfolio'},
+                            {'label': 'Q3 Portfolio', 'value': 'ordered'}],
                    value='portfolio',
                    className='dash-bootstrap')], width=2),
     ]),
@@ -56,7 +56,9 @@ def display_sankey(chart_type):
     if chart_type == 'ordered':
         node, link = get_spreadsheet_data('assets/Sankey Portfolio Ordered.xlsx')
         fig = go.Figure(go.Sankey(link=link, node=node))
-        fig.update_layout(font=dict(size=18, color='white'), height=1050, plot_bgcolor='#222', paper_bgcolor='#222', )
+        fig.update_layout(font=dict(size=18, color='white'), height=1050, plot_bgcolor='#222', paper_bgcolor='#222',
+                          title="Change in Portfolio Composition Q2->Q3"
+                          )
     else:
         node, link = get_spreadsheet_data('assets/Sankey Portfolio.xlsx')
         fig = go.Figure(go.Sankey(link=link, node=node))
@@ -64,7 +66,7 @@ def display_sankey(chart_type):
 
         fig.update_layout(
             hovermode='x',
-            title="Household Budget",
+            title="Change in Portfolio Composition Q1->Q2",
             font=dict(size=18, color='white'),
             height=1050,
             plot_bgcolor='#222',

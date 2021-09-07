@@ -240,9 +240,10 @@ def update_sentiment_area_chart(n_int, twitter_item, sensitivity, smoothing):
         y=Y3,
         name='Negative',
         mode='lines',
-        opacity=0.1,
+        opacity=0.3,
         stackgroup="two",
-        line_shape='spline'
+        line_shape='spline',
+        fillcolor="#A00"
 
     )
     data3 = plotly.graph_objs.Scatter(
@@ -252,7 +253,8 @@ def update_sentiment_area_chart(n_int, twitter_item, sensitivity, smoothing):
         mode='lines',
         opacity=0.2,
         stackgroup="one",
-        line_shape='spline'
+        line_shape='spline',
+
 
     )
     neu = 0
@@ -279,6 +281,7 @@ def update_sentiment_area_chart(n_int, twitter_item, sensitivity, smoothing):
 
     title_string = "Short-Term Twitter Sentiment trace"
     styling = go.Layout(title=title_string, xaxis=dict(range=[min(X), max(X)], title="Time (GMT)"),
+                                yaxis_title="Sentiment strength",
                                 plot_bgcolor='#222',
                                 paper_bgcolor='#222',
                                 font=dict(color='#58C'),
@@ -293,6 +296,6 @@ def update_sentiment_area_chart(n_int, twitter_item, sensitivity, smoothing):
     df = df.round(2)
     df = df.head(15)
 
-    return [{'data': [data, data2, data3],
-            'layout': styling}, generate_table(df, max_rows=10),
+    return [{'data': [data, data2, data3],'layout': styling},
+            generate_table(df, max_rows=10),
             fig]
