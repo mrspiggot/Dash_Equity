@@ -4,12 +4,8 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import yahoo_fin.stock_info as si
-from datetime import date
 import plotly.graph_objects as go
 from datetime import date, timedelta
-import pandas as pd
-
-
 
 class Stocks():
     def __init__(self):
@@ -38,7 +34,6 @@ class Stocks():
         time. The function dictionary with the stock ticker as its key and the OHLCV data transposed into a series of
         the cumulative daily returns for that stock'''
 
-
         returns_dict = {}
         for ticker, quote_df in quotes.items():
             daily_returns = quote_df['adjclose'].pct_change()
@@ -65,40 +60,15 @@ layout = html.Div([
                              options=stocks.dropdown_options,
                              value=stocks.tickers[0],
                              className='dash-bootstrap'
-            ), width=3
+            ), width=3,
         ),
         dbc.Col(dcc.Slider(id='date-slider',
-                           min=1,
-                           max=6,
-                           marks={
-                               1: '1M',
-                               2: '2M',
-                               3: '3M',
-                               4: '6M',
-                               5: '1Y',
-                               6: '2Y',
-                           },
-                           value=3,
-                           ), width=3
-                ),
-        dbc.Col(dcc.Dropdown(id='multi-dropdown',
-                             options=stocks.dropdown_options,
-                             value=stocks.tickers,
-                             multi=True,
-                             className='dash-bootstrap'
-            ), width=5
-        ),
-        dbc.Col(dcc.Slider(id='type-slider',
-                           min=1,
-                           max=2,
-                           marks={
-                               1: 'Price',
-                               2: 'Returns',
-
-                           },
-                           value=2,
-                           ), width=1
-                ),
+                           min=1, max=6, marks={1: '1M', 2: '2M', 3: '3M', 4: '6M', 5: '1Y', 6: '2Y'}, value=3),
+                width=3),
+        dbc.Col(dcc.Dropdown(id='multi-dropdown', options=stocks.dropdown_options, value=stocks.tickers, multi=True,
+                             className='dash-bootstrap'), width=5),
+        dbc.Col(dcc.Slider(id='type-slider', min=1, max=2, marks={1: 'Price', 2: 'Returns'}, value=2),
+                width=1),
     ]),
     dbc.Row([
         dbc.Col(
@@ -121,19 +91,11 @@ def single_stock_ohlc_chart(ticker, date_range):
     quotes = stocks.get_quotes(stocks.today-timedelta(days=stocks.date_dict[date_range]))
     df = quotes[ticker].iloc[date_range:]
 
-
-    fig = go.Figure(data=go.Candlestick(x=df.index.values,
-                                          open=df['open'],
-                                          high=df['high'],
-                                          low=df['low'],
-                                          close=df['adjclose']),
-                      )
-    fig.layout.plot_bgcolor='#222'
-    fig.layout.paper_bgcolor='#222'
+    fig = go.Figure(data=go.Candlestick(x=df.index.values, open=df['open'], high=df['high'], low=df['low'], close=df['adjclose']))
     fig.layout.title=stocks.ticker_dict[ticker] + str(": Stock price")
     fig.update_xaxes(title_text = "Date")
     fig.update_yaxes(title_text = "Stock Price ($)")
-    fig.update_layout(font=dict(color='#58C'), height=850)
+    fig.update_layout(font=dict(color='#58C'), height=850, plot_bgcolor='#222', paper_bgcolor='#222')
 
     return fig
 
@@ -164,12 +126,12 @@ def multi_stock_returns_chart(ticker, date_range, price_or_return):
                                      y=daily_returns.values,
                                      name=stocks.ticker_dict[stock_ticker]))
 
-    fig.layout.plot_bgcolor='#222'
-    fig.layout.paper_bgcolor='#222'
     fig.update_layout(font=dict(color='#58C'), height=850,
                       title=title,
                       xaxis_title='Date',
-                      yaxis_title=y_axis_text
+                      yaxis_title=y_axis_text,
+                      plot_bgcolor='#222',
+                      paper_bgcolor='#222'
                       )
 
     return fig

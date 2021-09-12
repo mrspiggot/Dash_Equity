@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import date, timedelta
 import requests
 import pypopulation
+import pickle
 
 class WebToDF():
     def __init__(self):
@@ -12,7 +13,33 @@ class WebToDF():
                             'display' : {0: '0', 1: '2,000,000', 2: '5,000,000', 3: '10,000,000', 4: '20,000,000', 5: '40,000,000'}}
 
     def get_country(self):
-        df = pd.read_html('https://statisticstimes.com/geography/countries-by-continents.php')[2]
+        fname = "country_continent.pickle"
+        try:
+            df = pd.read_pickle(fname)
+        except Exception as e:
+            print(e)
+            headers = {
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "accept-encoding": "gzip, deflate, br",
+                "accept-language": "en-US,en;q=0.9",
+                "connection": "keep-alive",
+                "cookie": "dontShowCookieNotice=TRUE",
+                "host": "covidtrackerapi.bsg.ox.ac.uk",
+                "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "sec-ch-ua": "Windows",
+                "sec-fetch-dest": "document",
+                "sec-fetch-mode": "navigate",
+                "sec-fetch-site": "cross-site",
+                "sec-gpc": "1",
+                "dnt": "1",
+                "origin": "https://stackoverflow.com",
+                "referer": "https://stackoverflow.com/questions/56399462/error-message-10054-when-wescraping-with-requests-module",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+            }
+            df = pd.read_html('https://statisticstimes.com/geography/countries-by-continents.php')[2]
+            df.to_pickle(fname)
+
+
         df.rename(columns = {'Country or Area': 'Name', "ISO-alpha3 Code": "ISO-3", "M49 Code": "M49", "Region 1": "Region"}, inplace=True)
 
         df = df[['Name', 'ISO-3', 'M49', 'Region', 'Continent']]
@@ -44,7 +71,13 @@ class WebToDF():
         return pd.read_html('https://worldpopulationreview.com/countries')[0]
 
     def get_oxcgrt(self):
-        df2 = self.get_dataframe_from_url()
+        today = date.today()
+        fname = str(today.year)+str(today.month)+str(today.day)+"_OXCGRT.pickle"
+        try:
+            df2 = pd.read_pickle(fname)
+        except Exception as e:
+            print(e)
+            df2 = self.get_dataframe_from_url(fname)
 
         cols = ['confirmed', 'deaths', 'stringency_actual', 'stringency', 'stringency_legacy', 'stringency_legacy_disp']
         df2[cols] = df2[cols].apply(pd.to_numeric, downcast='float', errors='coerce')
@@ -56,20 +89,43 @@ class WebToDF():
 
         return df2
 
-    def get_dataframe_from_url(self):
+    def get_dataframe_from_url(self, fname):
         start_date = date(2020, 1, 23)
         end_date = date.today() - timedelta(days=16)
+        headers = {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en-US,en;q=0.9",
+            "connection": "keep-alive",
+            "cookie": "dontShowCookieNotice=TRUE",
+            "host": "covidtrackerapi.bsg.ox.ac.uk",
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "sec-ch-ua": "Windows",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "cross-site",
+            "sec-gpc": "1",
+            "dnt": "1",
+            "origin": "https://stackoverflow.com",
+            "referer": "https://stackoverflow.com/questions/56399462/error-message-10054-when-wescraping-with-requests-module",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+        }
+
         url = "https://covidtrackerapi.bsg.ox.ac.uk/api/v2/stringency/date-range/" \
               + start_date.strftime('%Y-%m-%d') \
               + "/" \
               + end_date.strftime('%Y-%m-%d')
+        print(url)
+        with requests.Session() as session:
+            session.get(url)
+            myResponse = session.get(url, headers=headers)
 
-        myResponse = requests.get(url)
         my_json = myResponse.json()
         ox_dict = my_json['data']
 
         df = pd.concat({k: pd.DataFrame(v).T for k, v in ox_dict.items()}, axis=0)
-
+        session.close()
+        df.to_pickle(fname)
         return df
 
 

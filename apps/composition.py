@@ -3,10 +3,6 @@ import plotly.express as px
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import pandas as pd
-import pickle
-
-with open('assets/ticker.pickle', 'rb') as handle:
-    ticker_dict = pickle.load(handle)
 
 def portfolio_sunburst():
     payload = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')

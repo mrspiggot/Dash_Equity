@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
 import pickle
-import datetime
+
 
 slider_dict = {0: '1 Month', 1: "2 Months", 2: '3 Months', 3: '6 Months', 4: '1 Year', 5: '2 Years'}
 with open('assets/dropdown.pickle', 'rb') as handle:

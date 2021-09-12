@@ -108,15 +108,15 @@ layout = html.Div([
     Input('map-speed-slider', 'value')]
 )
 def update_graph(column, prj, col_scheme, speed):
-    frame_speed = 8*speed + 1
-    transition_speed = 8*speed/6 + 1
+    frame_speed = 12*speed + 1
+    transition_speed = 2*speed + 1
     fig = px.choropleth(blob.oxcgrt,
                         locations='Country',
                         animation_frame='date_value',
                         hover_name='Name',
                         projection=prj,
                         color=column,
-                        height=850,
+                        height=1080,
                         color_continuous_scale=col_scheme)
 
     fig.update_layout(title=dict(font=dict(size=28), x=0.5, xanchor='center'),
