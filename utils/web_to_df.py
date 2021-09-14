@@ -3,6 +3,7 @@ from datetime import date, timedelta
 import requests
 import pypopulation
 import pickle
+import os
 
 class WebToDF():
     def __init__(self):
@@ -13,7 +14,8 @@ class WebToDF():
                             'display' : {0: '0', 1: '2,000,000', 2: '5,000,000', 3: '10,000,000', 4: '20,000,000', 5: '40,000,000'}}
 
     def get_country(self):
-        fname = "country_continent.pickle"
+        cur_dir = os.getcwd()
+        fname = os.path.join(cur_dir, "assets", "country_continent.pickle")
         try:
             df = pd.read_pickle(fname)
         except Exception as e:
@@ -72,7 +74,10 @@ class WebToDF():
 
     def get_oxcgrt(self):
         today = date.today()
-        fname = str(today.year)+str(today.month)+str(today.day)+"_OXCGRT.pickle"
+        cur_dir = os.getcwd()
+        f_ext = str(today.year)+str(today.month)+str(today.day)+"_OXCGRT.pickle"
+        fname = os.path.join(cur_dir, "assets", f_ext)
+
         try:
             df2 = pd.read_pickle(fname)
         except Exception as e:

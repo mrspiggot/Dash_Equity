@@ -6,12 +6,30 @@ import numpy as np
 import pandas_datareader as pdr
 from pathlib import Path
 import pickle
+import os
+from pathlib import Path
+
+'''
+If you choose to save this project in a folder with a name other then "YT_Dash_Tutorial" then you will
+need to make changes to the "if os.getcwd()[-16:] == "YT_Dash_Tutorial":" line below to reflect your
+folder name
+'''
 
 curr_dir = Path.cwd()
+if os.getcwd()[-16:] == "YT_Dash_Tutorial":
+    F_PATH = os.path.join(curr_dir, "assets")
+else:
+    F_PATH = os.path.join(curr_dir.parent, "assets")
+
+'''
+Note comment above if you choose a base folder other the "YT_DASH_Tutorial for this project
+'''
+
 
 class PortfolioDataGenerator():
     def __init__(self):
-        self.df = pd.read_excel('../assets/Sample Portfolio.xlsx')
+        fname = os.path.join(F_PATH, "Sample Portfolio.xlsx")
+        self.df = pd.read_excel(fname)
         self.term_dictionary = {'Yesterday Close': -1, '1 Month': -21, '2 Months': -42, '3 Months': -63, '6 Months': -126, '1 Year': -252, '2 Years': 0, }
         self.quote_dictionary = self.generate_quotes()
         self.performance = self.generate_historical_performance()
@@ -40,15 +58,19 @@ class PortfolioDataGenerator():
         composite_df = self.df.merge(perf_df, how='inner', on='Ticker')
         return composite_df
 
-    def write_to_excel(self, file='../assets/Historical Performance.xlsx'):
-        self.performance.to_excel(file)
+    def write_to_excel(self, fname=""):
+        if fname == "":
+            fname = os.path.join(F_PATH, "Historical Performance.xlsx")
+
+        self.performance.to_excel(fname)
 
 # port = PortfolioDataGenerator()
 # port.write_to_excel()
 
 class BenchmarkGenerator():
     def __init__(self):
-        self.df = pd.read_excel('../assets/Sample Portfolio.xlsx')
+        fname=os.path.join(F_PATH, "Sample Portfolio.xlsx")
+        self.df = pd.read_excel(fname)
         self.benchmarks = self.get_benchmarks()
         self.term_dictionary = {'1 Month': 27, '2 Months': 54, '3 Months': 81, '6 Months': 162, '1 Year': 314, '2 Years': 628, }
         self.quote_dataframe = self.generate_quotes()
@@ -114,8 +136,10 @@ class BenchmarkGenerator():
     def generate_cumulative_portfolio_return(self, term):
         return (1 + self.generate_total_portfolio_return(term)).cumprod()
 
-    def get_benchmarks(self, file = '../assets/Benchmarks.xlsx'):
-        return pd.read_excel(file)
+    def get_benchmarks(self, fname="" ):
+        if fname== "":
+            fname = os.path.join(F_PATH, 'Benchmarks.xlsx')
+        return pd.read_excel(fname)
 
     def generate_content_for_dropdowns(self):
         types = self.benchmarks['Type'].unique()
@@ -130,12 +154,11 @@ class BenchmarkGenerator():
                 dropdown_list.append(d)
 
             type_dict[type] = dropdown_list
-
-        with open('../assets/dropdown.pickle', 'wb') as handle:
+        with open(os.path.join(F_PATH, 'dropdown.pickle', 'wb')) as handle:
             pickle.dump(type_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         ticker_dict = self.benchmarks.set_index('Ticker').to_dict()['Name']
-        with open('../assets/ticker.pickle', 'wb') as handle:
+        with open(os.path.join(F_PATH, 'ticker.pickle', 'wb')) as handle:
             pickle.dump(ticker_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         return type_dict, ticker_dict
@@ -144,13 +167,18 @@ class BenchmarkGenerator():
         terms = self.term_dictionary
         for term in terms.keys():
             cum_ret = self.generate_cumulative_portfolio_return(term)
-            cum_ret.to_excel('../assets/' + str(term) + '.xlsx')
+            parent = curr_dir.parent
+            fname = os.path.join(F_PATH, str(term) + '.xlsx')
+            cum_ret.to_excel(fname)
 
 
 class Risk():
-    def __init__(self, filename='assets/Sample Portfolio.xlsx'):
+    def __init__(self, filename=""):
+        if filename=="":
+            filename = os.path.join(F_PATH, 'Sample Portfolio.xlsx')
 
-        self.df = pd.read_excel(curr_dir.joinpath(filename))
+        self.df = pd.read_excel(filename)
+
         self.today = date.today()
         self.start = self.today - timedelta(days=3 * 365)
         self.tickers = self.get_tickers()
