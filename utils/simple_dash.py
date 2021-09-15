@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.H1("Sample Dash app to show numreic input, a text box and a dropdown"),
+    html.H1("Sample Dash app to show numeric input, a text box and a dropdown"),
     dcc.Input(id="numeric", type="number", placeholder="1"),
     dcc.Input(id="text", type="text", placeholder="Sample Text"),
     dcc.Dropdown(
