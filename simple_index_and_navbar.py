@@ -79,4 +79,4 @@ def display_page(pathname):
     return(html.H1("Navbar item selected is: " + str(pathname)))
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8027)
+    app.run_server(debug=True, port=8029)
