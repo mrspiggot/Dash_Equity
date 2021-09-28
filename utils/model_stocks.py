@@ -3,8 +3,8 @@ from datetime import date
 
 class Model():
     def __init__(self):
-        self.tickers = ['gs', 'jpm', 'msft', 'aapl']
-        self.names = ['Goldman Sachs', 'JP Morgan', 'Microsoft', 'Apple']
+        self.tickers = ['gs', 'jpm', 'msft', 'aapl', 'nvax', 'gme', '3333.HK']
+        self.names = ['Goldman Sachs', 'JP Morgan', 'Microsoft', 'Apple', 'Novavax', 'GameStop', 'Evergrande']
         self.ticker_dict = dict(zip(self.tickers, self.names))
         self.today = date.today()
         self.dropdown_options = self.populate_dropdown()

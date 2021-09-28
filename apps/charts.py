@@ -20,7 +20,7 @@ layout = html.Div([
         dbc.Col(dcc.Slider(id='date-slider',
                            min=1, max=6, marks={1: '1M', 2: '2M', 3: '3M', 4: '6M', 5: '1Y', 6: '2Y'}, value=3),
                 width=3),
-        dbc.Col(dcc.Dropdown(id='multi-dropdown', options=stocks.dropdown_options, value=stocks.tickers, multi=True,
+        dbc.Col(dcc.Dropdown(id='multi-dropdown', options=stocks.dropdown_options, value=['gs', 'jpm', 'msft', 'aapl'], multi=True,
                              className='dash-bootstrap'), width=5),
         dbc.Col(dcc.Slider(id='type-slider', min=1, max=2, marks={1: 'Price', 2: 'Returns'}, value=2),
                 width=1),
@@ -55,7 +55,7 @@ def single_stock_ohlc_chart(ticker, date_range):
 
     )
     fig.add_trace(
-        go.Scatter(x=df.index.values, y=df['volume'], name="Volume", line_color='#08E', line_dash='dash'),
+        go.Scatter(x=df.index.values, y=df['volume'], name="Volume", line_color='#05B', line_dash='dash'),
         secondary_y=True,
     )
     fig['layout']['yaxis2']['showgrid'] = False
