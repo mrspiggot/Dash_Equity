@@ -6,6 +6,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 from datetime import timedelta
 from utils.model_stocks import Model
+from plotly.subplots import make_subplots
 
 stocks = Model()
 layout = html.Div([
@@ -46,10 +47,22 @@ def single_stock_ohlc_chart(ticker, date_range):
     quotes = stocks.get_quotes(stocks.today-timedelta(days=stocks.date_dict[date_range]))
     df = quotes[ticker].iloc[date_range:]
 
-    fig = go.Figure(data=go.Candlestick(x=df.index.values, open=df['open'], high=df['high'], low=df['low'], close=df['adjclose']))
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
+        go.Candlestick(x=df.index.values, open=df['open'], high=df['high'], low=df['low'],
+                                      close=df['adjclose'], name="OHLC Prices"),
+        secondary_y=False,
+
+    )
+    fig.add_trace(
+        go.Scatter(x=df.index.values, y=df['volume'], name="Volume", line_color='#08E', line_dash='dash'),
+        secondary_y=True,
+    )
+    fig['layout']['yaxis2']['showgrid'] = False
     fig.layout.title=stocks.ticker_dict[ticker] + str(": Stock price")
     fig.update_xaxes(title_text = "Date")
-    fig.update_yaxes(title_text = "Stock Price ($)")
+    fig.update_yaxes(title_text = "Stock Price ($)", secondary_y=False)
+    fig.update_yaxes(title_text = "Daily Volume", secondary_y=True)
     fig.update_layout(font=dict(color='#58C'), height=850, plot_bgcolor='#222', paper_bgcolor='#222')
 
     return fig
