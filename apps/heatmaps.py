@@ -20,19 +20,36 @@ layout = html.Div([
             width=4, lg={'size': 4,  "offset": 1, 'order': 'first'}
         ),
         dbc.Col(html.H5('Move Slider to see gains (losses) over different timeframes'),
-            width=4, lg={'size': 4,  "offset": 0}),
+            width=4, lg={'size': 3,  "offset": 0}),
         dbc.Col(
             dcc.Slider(min=1, max=2, marks={1: "Yes", 2: "No"}, id="sector-include-slider", value=2),
             width=1, lg={'size': 1,  "offset": 0}),
         dbc.Col(html.H5('Include Stock Type?'),
-            width=2, lg={'size': 1, "offset": 0, 'order': 'last'}),
+            width=2, lg={'size': 1, "offset": 0}),
+        dbc.Col(
+            dcc.Dropdown(
+                id='col-dd',
+                options=[{'label': 'Thermal', 'value': 'thermal'},
+                         {'label': 'Red Blue', 'value': 'bluered'},
+                         {'label': 'Ice', 'value': 'ice'},
+                         {'label': 'Rainbow', 'value': 'rainbow'},
+                         {'label': 'Dark Mint', 'value': 'darkmint'},
+                         ],
+                value='thermal',
+                className='dash-bootstrap'
+            )
+        ),
+        dbc.Col(
+            html.H5("Colour Scheme")
+        ),
     ]),
     dbc.Spinner(dcc.Graph(id='sector-treemap', figure = {},), color='primary',),
 ])
 @app.callback(Output('sector-treemap', 'figure'),
               [Input('sector-treemap-slider', 'value'),
-               Input('sector-include-slider', 'value')])
-def treemap(value, include_type):
+               Input('sector-include-slider', 'value'),
+               Input('col-dd', 'value')])
+def treemap(value, include_type, col_scheme):
     port = pd.read_excel('assets/Historical Performance.xlsx')
 
     port["portfolio"] = "Portfolio"
@@ -47,7 +64,7 @@ def treemap(value, include_type):
 
 
     fig = px.treemap(port, path=tree_path, values='Yesterday Close', color='Gain',
-                     color_continuous_scale='thermal', height=1020,)
+                     color_continuous_scale=col_scheme, height=1020,)
     fig.data[0].textinfo = 'label+value+percent parent'
     fig.layout.plot_bgcolor='#222'
     fig.layout.paper_bgcolor='#222'
