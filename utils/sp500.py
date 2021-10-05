@@ -1,11 +1,15 @@
+import datetime
+
+import numpy as np
 import yahoo_fin.stock_info as si
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from ta.volatility import BollingerBands
 from ta.utils import dropna
 from ta.trend import PSARIndicator
 from ta.momentum import StochasticOscillator
 import math
 import pandas as pd
+import pickle
 
 
 class StockInfo():
@@ -25,7 +29,11 @@ class StockInfo():
         self.psar = self.fill_psar()
         self.stochastic = self.fill_stoch()
         self.liquidity = self.fill_liquidity()
-        self.peers = sp_500[sp_500['GICS Sub-Industry'] == self.industry]['Symbol'].to_list()
+        self.industry_peers = sp_500[sp_500['GICS Sub-Industry'] == self.industry]['Symbol'].to_list()
+        self.sector_peers = sp_500[sp_500['GICS Sector'] == self.industry]['Symbol'].to_list()
+
+
+        print(self.data)
         self.fundamentals = self.get_fundamentals()
 
 
@@ -36,9 +44,18 @@ class StockInfo():
         month = {}
         year = {}
 
-        today['open'] = self.data['regularMarketPreviousClose']
-        today['high'] = self.data['regularMarketDayHigh']
-        today['low'] = self.data['regularMarketDayLow']
+        try:
+            today['open'] = self.data['regularMarketPreviousClose']
+        except Exception as e:
+            today['open'] = self.ohlcv.tail(1)['adjclose']
+        try:
+            today['high'] = self.data['regularMarketDayHigh']
+        except Exception as e:
+            today['high'] = self.ohlcv.tail(1)['high']
+        try:
+            today['low'] = self.data['regularMarketDayLow']
+        except Exception as e:
+            today['low'] = self.ohlcv.tail(1)['low']
 
         year['high'] = self.data['fiftyTwoWeekHigh']
         year['low'] = self.data['fiftyTwoWeekLow']
@@ -153,12 +170,18 @@ class StockInfo():
         liquidity = {}
 
         liquidity['vol'] = self.ohlcv.tail(1)['volume'].to_list()[0]
-        liquidity['avg_vol'] = self.millify(self.data['averageDailyVolume3Month'])
+        liquidity['avg vol'] = self.ohlcv['volume'].mean()
         liquidity['bid'] = self.data['bid']
         liquidity['ask'] = self.data['ask']
-        liquidity['bid ask spread'] = self.ohlcv.tail(1)['open'].to_list()[0] * (liquidity['ask'] / liquidity['bid'] - 1)
+
         liquidity['bidsize'] = self.data['bidSize']
         liquidity['asksize'] = self.data['askSize']
+
+        try:
+            liquidity['bid ask spread'] = self.ohlcv.tail(1)['open'].to_list()[0] * (
+                        liquidity['ask'] / liquidity['bid'] - 1)
+        except Exception as e:
+            liquidity['bid ask spread'] = 0.05
 
         return liquidity
 
@@ -173,30 +196,149 @@ class StockInfo():
     def get_fundamentals(self):
         fundamentals = {}
 
-        fundamentals['Name'] = self.data['longName']
-        fundamentals['CCY'] = self.data['currency']
-        fundamentals['Div rate'] = self.data['trailingAnnualDividendRate']
-        fundamentals['Div yield'] = self.data['trailingAnnualDividendYield']
-        fundamentals['P/E ttm'] = self.data['trailingPE']
-        fundamentals['Float'] = self.millify(self.data['sharesOutstanding'])
-        fundamentals['Book Value'] = self.data['bookValue']
-        fundamentals['Market Cap'] = self.millify(self.data['marketCap'])
-        fundamentals['mkt cap int'] = self.data['marketCap']
-        fundamentals['Fwd P/E'] = self.data['forwardPE']
-        fundamentals['P/B'] = self.data['priceToBook']
-        fundamentals['Avg Rating'] = self.data['averageAnalystRating']
-        fundamentals['Beta'] = si.get_quote_table(self.ticker)['Beta (5Y Monthly)']
+        try:
+            fundamentals['Name'] = self.data['longName']
+        except Exception as e:
+            fundamentals['Name'] = self.ticker
+
+        try:
+            fundamentals['CCY'] = self.data['currency']
+        except Exception as e:
+            fundamentals['CCY'] = 'USD'
+
+        try:
+            fundamentals['Div rate'] = self.data['trailingAnnualDividendRate']
+        except Exception as e:
+            fundamentals['Div rate'] = 0.0
+        try:
+            fundamentals['Div yield'] = self.data['trailingAnnualDividendYield']
+        except Exception as e:
+            fundamentals['Div yield'] = 0.0
+        try:
+            fundamentals['Fwd P/E'] = self.data['forwardPE']
+        except Exception as e:
+            fundamentals['Fwd P/E'] = 0.0
+        try:
+            fundamentals['P/E ttm'] = self.data['trailingPE']
+        except Exception as e:
+            fundamentals['P/E ttm'] = fundamentals['Fwd P/E']
+
+        try:
+            fundamentals['Float'] = self.millify(self.data['sharesOutstanding'])
+        except Exception as e:
+            fundamentals['Float'] = 0
+
+        try:
+            fundamentals['Book Value'] = self.data['bookValue']
+        except Exception as e:
+            fundamentals['Book Value'] = 0.0
+
+        try:
+            fundamentals['Market Cap'] = self.millify(self.data['marketCap'])
+            fundamentals['mkt cap int'] = self.data['marketCap']
+        except Exception as e:
+            fundamentals['Market Cap'] = 0
+            fundamentals['mkt cap int'] = 0
+
+        try:
+            fundamentals['P/B'] = self.data['priceToBook']
+        except Exception as e:
+            fundamentals['P/B'] = 0.0
+
+
+        try:
+            fundamentals['Beta'] = si.get_quote_table(self.ticker)['Beta (5Y Monthly)']
+        except Exception as e:
+            fundamentals['Beta'] = 1.0
 
         return fundamentals
 
 
 class SP500():
     def __init__(self):
-        tickers = si.tickers_sp500(True)
+        self.tickers = si.tickers_sp500()
+        self.ticker_data = si.tickers_sp500(True)
+        self.stock_dict = {}
+        self.sector_average = pd.DataFrame()
+        self.industry_average = pd.DataFrame()
+
+    def populate_stock_info(self):
+        for ticker in self.tickers:
+            print(ticker)
+            self.stock_dict[ticker] = StockInfo(ticker)
+
+    def pickle_stocks(self, filename="sp500.pickle"):
+        pickle.dump(self.stock_dict, open(filename, "wb"))
+
+    def unpickle_stocks(self, filename="sp500.pickle"):
+        self.stock_dict = pickle.load(open(filename, "rb"))
+
+    def get_sector_averages(self):
+        sector_list = self.ticker_data['GICS Sector'].unique()
+        company_data_list = []
+        for sector in sector_list:
+            ticker_list = self.ticker_data[self.ticker_data['GICS Sector'] == sector]['Symbol'].to_list()
+
+            for ticker in ticker_list:
+                fundamentals = self.stock_dict[ticker].fundamentals
+                fundamentals['sector'] = sector
+                company_data_list.append(fundamentals)
+
+        df = pd.DataFrame(company_data_list)
+        self.sector_average = pd.pivot_table(df,
+                                 values=['Div rate', 'Div yield', 'Fwd P/E', 'P/E ttm', 'Book Value', 'mkt cap int', 'P/B', 'Beta'],
+                                 index='sector',
+                                 aggfunc={'Div rate': np.mean,
+                                          'Div yield': np.mean,
+                                          'Fwd P/E': np.mean,
+                                          'P/E ttm': np.mean,
+                                          'Book Value': np.mean,
+                                          'mkt cap int': np.mean,
+                                          'P/B': np.mean,
+                                          'Beta': np.mean,
+                                          })
 
 
-aapl = StockInfo('AAPL')
-print(aapl.liquidity)
-print(aapl.fundamentals)
-print(aapl.data)
+    def get_industry_averages(self):
+        industry_list = self.ticker_data['GICS Sub-Industry'].unique()
+        print(industry_list)
+        company_data_list = []
+        for industry in industry_list:
+            ticker_list = self.ticker_data[self.ticker_data['GICS Sub-Industry'] == industry]['Symbol'].to_list()
+
+            for ticker in ticker_list:
+                fundamentals = self.stock_dict[ticker].fundamentals
+                fundamentals['industry'] = industry
+                company_data_list.append(fundamentals)
+
+        df = pd.DataFrame(company_data_list)
+        self.industry_average = pd.pivot_table(df,
+                                 values=['Div rate', 'Div yield', 'Fwd P/E', 'P/E ttm', 'Book Value', 'mkt cap int', 'P/B', 'Beta'],
+                                 index='industry',
+                                 aggfunc={'Div rate': np.mean,
+                                          'Div yield': np.mean,
+                                          'Fwd P/E': np.mean,
+                                          'P/E ttm': np.mean,
+                                          'Book Value': np.mean,
+                                          'mkt cap int': np.mean,
+                                          'P/B': np.mean,
+                                          'Beta': np.mean,
+                                          })
+
+
+
+# a = StockInfo("A")
+
+print("Starting", datetime.now())
+sp500 = SP500()
+print("Initialised class", datetime.now())
+# sp500.populate_stock_info()
+# print("Got stock info", datetime.now())
+sp500.unpickle_stocks()
+print(sp500.get_industry_averages())
+print(sp500.get_sector_averages())
+print("Finished", datetime.now())
+
+print(sp500.sector_average, sp500.sector_average.info())
+
 
