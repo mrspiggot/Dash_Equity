@@ -3,7 +3,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk, twitter_charts, oxcgrt_bubble, oxcgrt_map
+from utils.sp500 import StockInfo
+from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk, twitter_charts, oxcgrt_bubble, oxcgrt_map, ticker
 
 input_analysis_dropdown = dbc.DropdownMenu(
     children=[
@@ -39,6 +40,7 @@ navbar = dbc.Navbar(
                  dbc.NavItem(dbc.NavLink("Sankey", href="/sankey")),
                  dbc.NavItem(dbc.NavLink("Rebalancing", href="/rebalancing")),
                  dbc.NavItem(dbc.NavLink("Risk", href="/Value_At_Risk")),
+                 dbc.NavItem(dbc.NavLink("Ticker", href="/ticker")),
                  input_analysis_dropdown,
 
                  ], className="ml-auto", navbar=True
@@ -91,6 +93,8 @@ def display_page(pathname):
         return oxcgrt_bubble.layout
     if pathname == '/oxford_map':
         return oxcgrt_map.layout
+    if pathname == '/ticker':
+        return ticker.layout
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8027)

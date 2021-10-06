@@ -27,8 +27,8 @@ Note comment above if you choose a base folder other the "YT_DASH_Tutorial for t
 
 
 class PortfolioDataGenerator():
-    def __init__(self):
-        fname = os.path.join(F_PATH, "Sample Portfolio.xlsx")
+    def __init__(self, fname = os.path.join(F_PATH, "Sample Portfolio.xlsx")):
+
         self.df = pd.read_excel(fname)
         self.term_dictionary = {'Yesterday Close': -1, '1 Month': -21, '2 Months': -42, '3 Months': -63, '6 Months': -126, '1 Year': -252, '2 Years': 0, }
         self.quote_dictionary = self.generate_quotes()
@@ -39,7 +39,13 @@ class PortfolioDataGenerator():
     def generate_quotes(self):
         quote_dict = {}
         for ticker in self.df['Ticker'].to_list():
-            quote_history = si.get_data(ticker, date.today() - timedelta(days=730), date.today())
+            try:
+                quote_history = si.get_data(ticker, date.today() - timedelta(days=730), date.today())
+            except Exception as e:
+                print(e)
+                print(ticker)
+                quote_history = si.get_data(ticker, date.today() - timedelta(days=728), date.today())
+
             quote_dict[ticker] = quote_history
 
         return quote_dict
@@ -63,6 +69,18 @@ class PortfolioDataGenerator():
             fname = os.path.join(F_PATH, "Historical Performance.xlsx")
 
         self.performance.to_excel(fname)
+
+    def ticker_name_dict(self):
+        dd_list = []
+
+        tickers = self.df['Ticker'].to_list()
+        for t in tickers:
+            dd_dict = {}
+            dd_dict['label'] = t
+            dd_dict['value'] = t
+            dd_list.append(dd_dict)
+
+        return dd_list
 
 # port = PortfolioDataGenerator()
 # port.write_to_excel()

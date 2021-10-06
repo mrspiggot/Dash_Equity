@@ -1,5 +1,3 @@
-import datetime
-
 import numpy as np
 import yahoo_fin.stock_info as si
 from datetime import date, timedelta, datetime
@@ -10,6 +8,7 @@ from ta.momentum import StochasticOscillator
 import math
 import pandas as pd
 import pickle
+# from utils.generate_portfolio_data import PortfolioDataGenerator
 
 
 class StockInfo():
@@ -17,6 +16,7 @@ class StockInfo():
         today = date.today()
         one_year = today - timedelta(days=365)
         sp_500 = si.tickers_sp500(True)
+
 
         self.data = si.get_quote_data(ticker)
         self.ticker = ticker
@@ -35,7 +35,6 @@ class StockInfo():
 
         print(self.data)
         self.fundamentals = self.get_fundamentals()
-
 
 
     def fill_quotes_dict(self):
@@ -255,7 +254,7 @@ class StockInfo():
 
 
 class SP500():
-    def __init__(self):
+    def __init__(self, fname='../assets/Sample Portfolio.xlsx'):
         self.tickers = si.tickers_sp500()
         self.ticker_data = si.tickers_sp500(True)
         self.stock_dict = {}
@@ -327,18 +326,19 @@ class SP500():
 
 
 
+
 # a = StockInfo("A")
 
-print("Starting", datetime.now())
-sp500 = SP500()
-print("Initialised class", datetime.now())
+# print("Starting", datetime.now())
+# sp500 = SP500()
+# print("Initialised class", datetime.now())
 # sp500.populate_stock_info()
 # print("Got stock info", datetime.now())
-sp500.unpickle_stocks()
-print(sp500.get_industry_averages())
-print(sp500.get_sector_averages())
-print("Finished", datetime.now())
-
-print(sp500.sector_average, sp500.sector_average.info())
+# sp500.pickle_stocks()
+# print(sp500.get_industry_averages())
+# print(sp500.get_sector_averages())
+# print("Finished", datetime.now())
+#
+# print(sp500.sector_average, sp500.sector_average.info())
 
 
