@@ -8,6 +8,9 @@ from ta.momentum import StochasticOscillator
 import math
 import pandas as pd
 import pickle
+import os
+from pandas_datareader import data as pdr
+
 # from utils.generate_portfolio_data import PortfolioDataGenerator
 
 
@@ -20,7 +23,8 @@ class StockInfo():
 
         self.data = si.get_quote_data(ticker)
         self.ticker = ticker
-        self.ohlcv = si.get_data(ticker, start_date=one_year, end_date=today)
+        # self.ohlcv = si.get_data(ticker, start_date=one_year, end_date=today)
+        self.ohlcv = self.pandas_yahoo(ticker, one_year, today)
         self.sector = sp_500[sp_500['Symbol'] == ticker]['GICS Sector'].to_list()[0]
         self.industry = sp_500[sp_500['Symbol'] == ticker]['GICS Sub-Industry'].to_list()[0]
         self.name = sp_500[sp_500['Symbol'] == ticker]['Security'].to_list()[0]
@@ -30,12 +34,17 @@ class StockInfo():
         self.stochastic = self.fill_stoch()
         self.liquidity = self.fill_liquidity()
         self.industry_peers = sp_500[sp_500['GICS Sub-Industry'] == self.industry]['Symbol'].to_list()
-        self.sector_peers = sp_500[sp_500['GICS Sector'] == self.industry]['Symbol'].to_list()
+        self.sector_peers = sp_500[sp_500['GICS Sector'] == self.sector]['Symbol'].to_list()
 
 
         print(self.data)
         self.fundamentals = self.get_fundamentals()
 
+    def pandas_yahoo(self, ticker, start, end):
+        df = pdr.get_data_yahoo(ticker, start, end)
+        df.set_axis(['high', 'low', 'open', 'close', 'volume', 'adjclose'], axis=1, inplace=True)
+        print(df)
+        return df
 
     def fill_quotes_dict(self):
         quotes_dict = {}
@@ -64,6 +73,11 @@ class StockInfo():
         month['high'] = trailing_month['adjclose'].max()
         month['low'] = trailing_month['adjclose'].min()
         month['open'] = trailing_month.iloc[0]['adjclose']
+        if month['open'] != month['open']:
+            month['open'] = trailing_month.iloc[1]['adjclose']
+            print(trailing_month.iloc[0])
+            print(trailing_month.iloc[1])
+            print(trailing_month, trailing_month.info())
 
         quotes_dict['today'] = today
         quotes_dict['month'] = month
@@ -264,12 +278,20 @@ class SP500():
     def populate_stock_info(self):
         for ticker in self.tickers:
             print(ticker)
-            self.stock_dict[ticker] = StockInfo(ticker)
+            try:
+                self.stock_dict[ticker] = StockInfo(ticker)
+            except Exception as e:
+                print(e, "Unable to get info for", ticker)
+                self.stock_dict[ticker] = {}
+
+            pickle.dump(self.stock_dict[ticker], open("../assets/stock_info/"+str(ticker)+".pickle", "wb"))
 
     def pickle_stocks(self, filename="sp500.pickle"):
         pickle.dump(self.stock_dict, open(filename, "wb"))
 
     def unpickle_stocks(self, filename="sp500.pickle"):
+        print(filename)
+        print(os.getcwd())
         self.stock_dict = pickle.load(open(filename, "rb"))
 
     def get_sector_averages(self):
@@ -327,18 +349,12 @@ class SP500():
 
 
 
-# a = StockInfo("A")
-
-# print("Starting", datetime.now())
 # sp500 = SP500()
-# print("Initialised class", datetime.now())
 # sp500.populate_stock_info()
-# print("Got stock info", datetime.now())
 # sp500.pickle_stocks()
 # print(sp500.get_industry_averages())
 # print(sp500.get_sector_averages())
 # print("Finished", datetime.now())
-#
 # print(sp500.sector_average, sp500.sector_average.info())
 
 

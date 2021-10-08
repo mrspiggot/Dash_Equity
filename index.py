@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-from utils.sp500 import StockInfo
+from utils.sp500_si import StockInfo
 from apps import charts, heatmaps, benchmarks, composition, rebalancing, sankey, risk, twitter_charts, oxcgrt_bubble, oxcgrt_map, ticker
 
 input_analysis_dropdown = dbc.DropdownMenu(
