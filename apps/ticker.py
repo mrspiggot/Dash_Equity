@@ -283,12 +283,9 @@ def fill_ti(stock, live):
 
 def peer_candlestick(stock, scope):
 
-    print(scope)
     if scope == 0:
-        print("Industry")
         peer_tickers = stock.industry_peers
     else:
-        print("Sector")
         peer_tickers = stock.sector_peers
 
     t_list = []
