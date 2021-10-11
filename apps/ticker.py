@@ -20,17 +20,27 @@ sp500.unpickle_stocks('utils/sp500.pickle')
 layout = html.Div([
     dbc.Row([
         dbc.Col(dcc.Dropdown(id='dd-ticker-ticker', options=port.ticker_name_dict(),
-                             value='AAPL', className='dash-bootstrap'), width=2),
+                             value='AAPL', className='dash-bootstrap'), width={"size":2, "offset": 0}),
         dbc.Col(daq.BooleanSwitch(id='bs-ticker-ind-sec', on=False,
                                   color='#0088EE',
                                   label="Sector <-> Industry",
                                   labelPosition='top'), width=1)
     ]),
     dbc.Row([
-        dbc.CardDeck(id='card-ticker', children=[])
+        dbc.Col(
+            dbc.CardDeck(id='card-ticker', children=[]), width={"offset": 0}
+        ),
+        dbc.Col(
+            dcc.Loading(dcc.Graph(id='pb-bar'), type = 'graph')
+        )
     ]),
     dbc.Row([
-        dcc.Loading(dcc.Graph(id='peer-candlestick'), type='graph')
+        dbc.Col(
+            dcc.Loading(dcc.Graph(id='peer-candlestick'), type='graph'), width={"offset": 0}
+        ),
+        dbc.Col(
+            dcc.Loading(dcc.Graph(id='pe-bar'), type='graph')
+        )
     ])
 ])
 def fill_simple_quote(name, ticker, ccy, live, delta, sec, ind):
@@ -288,16 +298,18 @@ def peer_candlestick(stock, scope):
     else:
         peer_tickers = stock.sector_peers
 
+    f_list = []
     t_list = []
     for ticker in peer_tickers:
         s_d = {}
+        f_d = {}
 
         s = sp500.stock_dict[ticker]
         live = si.get_live_price(ticker)
         t = s.ohlcv.tail(1)
 
         th = t['high'].to_list()[0]
-        tl = t['low'].to_list()[0]
+        tl = min(t['low'].to_list()[0], live)
         to = t['open'].to_list()[0]
         tc = live
 
@@ -306,6 +318,9 @@ def peer_candlestick(stock, scope):
         po = 0
         pc = 100 * (tc-to)/to
 
+        f_d['P/E'] = s.fundamentals['Fwd P/E']
+        f_d['P/B'] = s.fundamentals['P/B']
+        f_d['ticker'] = ticker
 
         s_d['high'] = ph
         s_d['low'] = pl
@@ -314,11 +329,46 @@ def peer_candlestick(stock, scope):
         s_d['ticker'] = ticker
 
         t_list.append(s_d)
+        f_list.append((f_d))
 
     df = pd.DataFrame(t_list)
-
+    dff = pd.DataFrame(f_list)
+    dff['colour'] = 'cyan'
+    dff['colour'][dff['ticker']==stock.ticker] = 'orange'
     df.to_excel(stock.ticker+"_DF.xlsx")
     df.sort_values(by=['close'], ascending=False, inplace=True)
+
+    dff.sort_values(by=['P/E'], ascending=False, inplace=True)
+
+    tstring = stock.ticker + " P/E = " + "{:.2f}".format(dff['P/E'][dff['ticker']==stock.ticker].to_list()[0])
+    fig_pe = go.Figure(go.Bar(
+        x=dff['ticker'],
+        y=dff['P/E'],
+        marker={'color': dff['colour']},
+
+    ))
+    fig_pe.update_layout(font=dict(color='#58C'),
+                         height=650, width=1200,
+                         plot_bgcolor='#222',
+                         paper_bgcolor='#222',
+                         # scene=dict(xaxis=dict(nticks=50)),
+                         title={'text':tstring})
+    fig_pe.update_yaxes(title_text = "PE Ratio")
+
+    dff.sort_values(by=['P/B'], ascending=False, inplace=True)
+    tstring = stock.ticker + " P/B = " + "{:.2f}".format(dff['P/B'][dff['ticker']==stock.ticker].to_list()[0])
+    fig_pb = go.Figure(go.Bar(
+        x=dff['ticker'],
+        y=dff['P/B'],
+        marker={'color': dff['colour']},
+
+    ))
+    fig_pb.update_layout(font=dict(color='#58C'),
+                         height=530, width=1200,
+                         plot_bgcolor='#222',
+                         paper_bgcolor='#222',
+                         title={'text':tstring})
+    fig_pb.update_yaxes(title_text = "Price to Book Ratio")
 
     fig = go.Figure(go.Candlestick(
         x=df['ticker'],
@@ -329,16 +379,18 @@ def peer_candlestick(stock, scope):
     ))
     fig.update_layout(xaxis_rangeslider_visible=False)
     fig['layout']['yaxis']['showgrid'] = False
-    fig.update_layout(font=dict(color='#58C'), height=650, width=1600, plot_bgcolor='#222', paper_bgcolor='#222')
+    fig.update_layout(font=dict(color='#58C'), height=650, width=1500, plot_bgcolor='#222', paper_bgcolor='#222')
     fig.update_yaxes(title_text = "Percentage change from open")
     fig.add_annotation(x=stock.ticker, y=df['high'].max(), text=stock.ticker, font=dict(size=22), ax=0,
         bordercolor="#c7c7c7", borderwidth=2, borderpad=4, bgcolor="#ff7f0e")
 
-    return fig
+    return fig, fig_pe, fig_pb
 
 
 @app.callback([Output('card-ticker', 'children'),
-               Output('peer-candlestick', 'figure')],
+               Output('peer-candlestick', 'figure'),
+               Output('pe-bar', 'figure'),
+               Output('pb-bar', 'figure')],
               [Input('dd-ticker-ticker', 'value'),
                Input('bs-ticker-ind-sec', 'on')])
 def load_sec_info(ticker, scope):
@@ -355,7 +407,6 @@ def load_sec_info(ticker, scope):
     card_list.append(changes)
     technical_indicators = fill_ti(stock, live)
     card_list.append(technical_indicators)
-    fig = peer_candlestick(stock, scope)
+    fig, fig_pe, fig_pb = peer_candlestick(stock, scope)
 
-
-    return card_list, fig
+    return card_list, fig, fig_pe, fig_pb

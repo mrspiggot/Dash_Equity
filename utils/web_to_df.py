@@ -4,6 +4,7 @@ import requests
 import pypopulation
 import pickle
 import os
+import time
 
 class WebToDF():
     def __init__(self):
@@ -121,18 +122,39 @@ class WebToDF():
               + "/" \
               + end_date.strftime('%Y-%m-%d')
         print(url)
-        with requests.Session() as session:
-            session.get(url)
-            myResponse = session.get(url, headers=headers)
 
-        my_json = myResponse.json()
-        ox_dict = my_json['data']
+        c = 0
+        trycount = 3
+        while trycount > 0:
+            try:
+                with requests.Session() as session:
+                    session.get(url)
+                    myResponse = session.get(url, headers=headers)
+                    my_json = myResponse.json()
+                    ox_dict = my_json['data']
 
-        df = pd.concat({k: pd.DataFrame(v).T for k, v in ox_dict.items()}, axis=0)
-        session.close()
-        df.to_pickle(fname)
+                    df = pd.concat({k: pd.DataFrame(v).T for k, v in ox_dict.items()}, axis=0)
+                    session.close()
+                    df.to_pickle(fname)
+                return df
+                c += 1
+                with open('htmls/p{}.html'.format(c), 'w', encoding='UTF-8') as f:
+                    f.write(myResponse.text)
+                trycount = 0  # success
+            except Exception as ex:
+                if trycount <= 0:
+                    print("Failed to retrieve: " + url + "\n" + str(ex))  # done retrying
+                else:
+                    trycount -= 1  # retry
+                time.sleep(0.5)  # wait 1/2 second then retry
+
+        cur_dir = os.getcwd()
+        fname = os.path.join(cur_dir, "assets", "2021106_OXCGRT.pickle")
+        print(fname)
+        dp = open(fname, "rb")
+        df = pickle.load(dp)
+
         return df
-
 
     def get_daily(self, df):
         df['daily_cases'] = df.groupby(['Country'])['confirmed'].transform(lambda x: x.sub(x.shift()).abs())
