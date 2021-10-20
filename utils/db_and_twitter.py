@@ -140,8 +140,8 @@ class TwitterClient():
                 time.sleep(5)
 
 
-my_conn = DB_SQLite("twitter.db")
-my_conn.create_table("tweet_sentiment", {"keyword": "TEXT", "unix_time": "INT", "tweet": "TEXT", "neg": "REAL", "neu": "REAL", "pos": "REAL", "compound": "REAL", "polarity": "REAL", "subjectivity": "REAL"})
+# my_conn = DB_SQLite("twitter.db")
+# my_conn.create_table("tweet_sentiment", {"keyword": "TEXT", "unix_time": "INT", "tweet": "TEXT", "neg": "REAL", "neu": "REAL", "pos": "REAL", "compound": "REAL", "polarity": "REAL", "subjectivity": "REAL"})
 # my_conn.insert_values("pandas_test2", {'name': 'AAPL', 'key': 1,'value': 231.6})
 # my_conn.insert_values("pandas_test2", {'name': 'FB', 'key': 2,'value': 438.2})
 # my_conn.insert_values("pandas_test2", {'name': 'MSFT', 'key': 3,'value': 542.9})
@@ -149,6 +149,6 @@ my_conn.create_table("tweet_sentiment", {"keyword": "TEXT", "unix_time": "INT", 
 # df = my_conn.sql_to_df("SELECT * from pandas_test2")
 # print(df, df.info())
 
-# my_conn = DB_SQLite("twitter.db")
-# my_twitter_client = TwitterClient()
-# my_twitter_client.connect_to_server_and_run(my_conn)
+my_conn = DB_SQLite("twitter.db")
+my_twitter_client = TwitterClient()
+my_twitter_client.connect_to_server_and_run(my_conn)

@@ -319,7 +319,7 @@ def peer_candlestick(stock, scope):
         pc = 100 * (tc-to)/to
 
         f_d['P/E'] = s.fundamentals['Fwd P/E']
-        f_d['P/B'] = s.fundamentals['P/B']
+        f_d['P/B'] = max(s.fundamentals['P/B'], -10)
         f_d['ticker'] = ticker
 
         s_d['high'] = ph

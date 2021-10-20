@@ -69,4 +69,5 @@ def treemap(value, include_type, col_scheme):
     fig.layout.plot_bgcolor='#222'
     fig.layout.paper_bgcolor='#222'
     fig.update_layout(font_color='#29E')
+
     return fig
